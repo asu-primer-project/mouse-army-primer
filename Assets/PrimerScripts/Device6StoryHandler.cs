@@ -37,7 +37,7 @@ public class Device6StoryHandler : MonoBehaviour {
 		 * }
 		 * 
 		 * 
-		 * /
+		 */
 
 	
 	}
