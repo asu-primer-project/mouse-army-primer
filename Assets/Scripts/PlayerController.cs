@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public enum SwipeDirection{
+public enum Swipe_direction{
 	Up,
 	Down,
 	Right,
@@ -13,6 +13,8 @@ public class PlayerController : MonoBehaviour {
 	//world boundries
 	private float minX, maxX, minZ, maxZ;
 
+	private float startTime;
+
 	int currentRow=0;
 	int currentColumn=0;
 
@@ -22,7 +24,7 @@ public class PlayerController : MonoBehaviour {
 										   };
 
 	public bool isUpdateAllowed(){
-		//set direction when touched
+		//set _direction when touched
 		bool isLeft = false;
 		bool isRight = false;
 		bool isTop = false;
@@ -58,11 +60,10 @@ public class PlayerController : MonoBehaviour {
 			}
 		}
 
-		return false;
 	}
 
 
-	//private static event Action<SwipeDirection> Swipe;
+	//private static event Action<Swipe_direction> Swipe;
 	private bool swiping = false;
 	private bool eventSent = false;
 	private Vector2 lastPosition;
@@ -80,7 +81,6 @@ public class PlayerController : MonoBehaviour {
 		Vector3 topCorner = Camera.main.ViewportToWorldPoint(new Vector3(1,1, camDistance));
 
 		//viewport width and height can be determined by difference between bottomCorner and topCorner
-
 		width = (bottomCorner.x - topCorner.x);
 		height = (topCorner.z - bottomCorner.z);
 
@@ -90,65 +90,71 @@ public class PlayerController : MonoBehaviour {
 		maxZ = topCorner.z;
 
 	}
+
 	
-	// Update is called once per frame
+	float speed = 0.1f;
+
+	int _direction = -1; // 1,2,3,4  -  left,right,up,down resp
+
 	void Update () {
 
+		if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Began) {
+			startTime=Time.time;
+		}
+		else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Stationary) {
+			Vector2 touchPosition = Input.GetTouch (0).position;
+			double halfScreen = Screen.width / 10.0;
+			double rightScreen = (Screen.width * 9.0) / 10.0;
+
+			double halfVertical = Screen.height / 10.0;
+			double belowVertical = (Screen.height * 9.0) / 10.0;
+			
+			//Check if it is left or right?
+			if (touchPosition.x < halfScreen) {
+				//transform.Translate(Vector3.left * 10 * Time.deltaTime);
+				_direction = 1;
+			} else if (touchPosition.x > rightScreen) {
+				//transform.Translate(Vector3.right * 10 * Time.deltaTime);
+				_direction = 2;
+			} else if (touchPosition.y < halfVertical) {
+				//Vector3 movement = new Vector3(0,0,Vector3.left.x*10*Time.deltaTime);
+				//transform.Translate(movement);	
+				_direction = 3;
+			} else if (touchPosition.y > belowVertical) {
+				//Vector3 movement = new Vector3(0,0,Vector3.left.x*10*Time.deltaTime);
+				//transform.Translate(movement*(-1));
+				_direction = 4;
+			}
+		} else if (Input.touchCount > 0 && Input.GetTouch (0).phase == TouchPhase.Ended) {
+
+			if (_direction == 1){
+				Vector3 moveTo = new Vector3(transform.position.x+width,0,transform.position.z);
+				iTween.MoveTo(gameObject,moveTo,2);
+				_direction = -1;
+			}
+			else if (_direction == 2) {
+				Vector3 moveTo = new Vector3(transform.position.x-width,0,transform.position.z);
+				iTween.MoveTo(gameObject,moveTo,2);
+				_direction = -1;
+			}
+			else if(_direction == 3){
+				//move by all the screen size
+				Vector3 moveTo = new Vector3(transform.position.x,0,transform.position.z-height);
+				iTween.MoveTo(gameObject,moveTo,2);
+				_direction = -1;
+			}else if(_direction == 4){
+				//move by all the screen size
+				Vector3 moveTo = new Vector3(transform.position.x,0,transform.position.z+height);
+				iTween.MoveTo(gameObject,moveTo,2);
+				_direction = -1;
+			}
+
+		}
 	}
 
-
 	void FixedUpdate(){
-		Vector3 movement;
-		float moveHorizantal=0.0f;
-		float moveVertical = 0.0f;
-		if (Input.touchCount == 0) 
-			return;
-		
-		if (Input.GetTouch(0).deltaPosition.sqrMagnitude != 0){
-			if (swiping == false){
-				swiping = true;
-				lastPosition = Input.GetTouch(0).position;
-				return;
-			}
-			else{
-				if (!eventSent) {
-					if (swiping) {
-						Vector2 direction = Input.GetTouch(0).position - lastPosition;
-						
-						if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y)){
-							if (direction.x > 0) {
-								//Swipe(SwipeDirection.Right);
-								moveHorizantal=width;
-							}
-							else{
-								//Swipe(SwipeDirection.Left);
-								moveHorizantal=(-1) * width;
-							}
-							movement = new Vector3 (moveHorizantal, 0.0f, 0.0f);
-							//device 6 style
-							transform.Translate(movement);
-						}
-						else{
-							if (direction.y > 0){
-								//Swipe(SwipeDirection.Up);
-								moveVertical=height;
-							}
-							else{
-								//Swipe(SwipeDirection.Down);
-								moveVertical=(-1)*height;
-							}
-							movement = new Vector3 (0.0f, 0.0f, moveVertical);
-							transform.Translate (movement);
-						}
-						
-						eventSent = true;
-					}
-				}
-			}
-		}
-		else{
-			swiping = false;
-			eventSent = false;
-		}
-		} 
+		/*float weight = Mathf.Cos(Time.time * speed * 2 * Mathf.PI) * 0.5f + 0.5f;
+		transform.position = targetA.transform.position * weight
+			+ targetB.transform.position * (1-weight);*/
+	} 
 }

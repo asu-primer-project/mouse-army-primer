@@ -285,7 +285,9 @@ function DidJump ()
 	
 	_characterState = CharacterState.Jumping;
 }
-
+var speed : float = 6.0;
+	var jumpSpeed : float = 8.0;
+	
 function Update() {
 	
 	if (!isControllable)
@@ -384,6 +386,25 @@ function Update() {
 			SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
 		}
 	}
+	var controller1 : CharacterController = GetComponent.<CharacterController>();
+		if (controller1.isGrounded) {
+			// We are grounded, so recalculate
+			// move direction directly from axes
+			moveDirection = Vector3(Input.GetAxis("Horizontal"), 0,
+			                        Input.GetAxis("Vertical"));
+			moveDirection = transform.TransformDirection(moveDirection);
+			moveDirection *= speed;
+			
+			if (Input.GetButton ("Jump")) {
+				moveDirection.y = jumpSpeed;
+			}
+		}
+
+		// Apply gravity
+		moveDirection.y -= gravity * Time.deltaTime;
+		
+		// Move the controller
+		controller1.Move(moveDirection * Time.deltaTime);
 }
 
 function OnControllerColliderHit (hit : ControllerColliderHit )
